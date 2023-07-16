@@ -1,0 +1,9 @@
+when popup number is 1 - means user is on welcome note of system 
+
+when popup number is 2 - means user is on how to add project
+
+when popup number is 3 - means user is on how add content
+
+when popup number is 4 - means user is on how move content
+
+when popup number is 5 - means user is on add project

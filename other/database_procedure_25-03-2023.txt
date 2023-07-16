@@ -1,0 +1,85 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `project_management_system_sp1`(IN `p_userid` int,IN `p_content` varchar(100),IN `p_projectname` varchar(20),IN `p_projectdescription` varchar(1000),IN `p_projectid` int,IN `p_sectionholdingid` tinyint,IN `p_contentid` int,IN `p_datetime` datetime,IN `p_mode` tinyint,INOUT `out_parameter` int)
+BEGIN
+
+-- mode 1
+	IF(p_mode =1) THEN
+	
+	-- insert the new record of the content
+		INSERT INTO tbl_content(content, content_added_date, section_holding_ids, project_id, user_id) VALUES (p_content,CURRENT_TIMESTAMP(),p_sectionholdingid,p_projectid,p_userid);
+		
+		SET out_parameter = LAST_INSERT_ID();
+	-- update the count of do it by 1
+		UPDATE tbl_count SET count_doit = count_doit + 1 WHERE project_id = p_projectid AND user_id = p_userid;
+	end if;
+	
+-- mode 2
+	IF(p_mode =2) THEN
+	
+		set @previous_section_holding_div = (SELECT section_holding_ids FROM tbl_content WHERE content_id = p_contentid AND project_id = p_projectid AND user_id = p_userid);
+		
+		SET @LastUpdateID = 0;
+		UPDATE tbl_content SET section_holding_ids=p_sectionholdingid,content_id = (SELECT @LastUpdateID := content_id) WHERE content_id=p_contentid AND project_id=p_projectid AND user_id=p_userid;
+		
+		SET out_parameter = @LastUpdateID;
+	
+			IF(@previous_section_holding_div = 1 AND p_sectionholdingid = 2) THEN
+				UPDATE tbl_count SET count_doit = count_doit -1 , count_inprogress = count_inprogress +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 1 AND p_sectionholdingid = 3) THEN
+				UPDATE tbl_count SET count_doit = count_doit -1 , count_verify = count_verify +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+			IF(@previous_section_holding_div = 1 AND p_sectionholdingid = 4) THEN
+				UPDATE tbl_count SET count_doit = count_doit -1 , count_done = count_done +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 2 AND p_sectionholdingid = 1) THEN
+				UPDATE tbl_count SET count_inprogress = count_inprogress -1, count_doit = count_doit +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 2 AND p_sectionholdingid = 3) THEN
+				UPDATE tbl_count SET count_inprogress = count_inprogress -1, count_verify = count_verify +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 2 AND p_sectionholdingid = 4) THEN
+				UPDATE tbl_count SET count_inprogress = count_inprogress -1, count_done = count_done +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 3 AND p_sectionholdingid = 1) THEN
+				UPDATE tbl_count SET count_verify = count_verify -1, count_doit = count_doit +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 3 AND p_sectionholdingid = 2) THEN
+				UPDATE tbl_count SET count_verify = count_verify -1, count_inprogress = count_inprogress +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 3 AND p_sectionholdingid = 4) THEN
+				UPDATE tbl_count SET count_verify = count_verify -1, count_done = count_done +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 4 AND p_sectionholdingid = 1) THEN
+				UPDATE tbl_count SET count_done = count_done -1, count_doit = count_doit +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 4 AND p_sectionholdingid = 2) THEN
+				UPDATE tbl_count SET count_done = count_done -1, count_inprogress = count_inprogress +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+		
+		IF(@previous_section_holding_div = 4 AND p_sectionholdingid = 3) THEN
+				UPDATE tbl_count SET count_done = count_done -1, count_verify = count_verify +1 WHERE project_id = p_projectid AND user_id = p_userid;
+		end if;
+	end if;
+	
+-- mode 3
+	IF(p_mode =3) THEN
+	
+	  INSERT INTO tbl_project(project_name,project_description,project_added_date,user_id) VALUE (p_projectname,p_projectdescription,CURRENT_TIMESTAMP(),p_userid);
+		
+		SET @new_inseted_project_id = LAST_INSERT_ID();
+		SET out_parameter =  LAST_INSERT_ID();
+	
+		INSERT INTO tbl_count(count_doit,count_inprogress,count_verify,count_done,user_id,project_id) VALUES (0,0,0,0,p_userid,@new_inseted_project_id);
+	end if;
+
+END
