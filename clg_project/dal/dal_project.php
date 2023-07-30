@@ -1,0 +1,48 @@
+<?php
+include 'dal_db.php';
+session_start();
+
+if (isset($_POST['add_project_to_table'])) {
+	mysqli_query($con, "set @out_parameter = 0");
+	mysqli_query($con, "CALL project_management_system_sp1($_SESSION[user_id],'','$_POST[project_name]','$_POST[project_description]',0,0,0,CURRENT_TIMESTAMP,3,@out_parameter)");
+	$rs2 = mysqli_query($con, "SELECT @out_parameter as out_parameter ");
+	$row = mysqli_fetch_assoc($rs2);
+	$date = date('Y-m-d H:i:s');
+
+	if ($row['out_parameter'] > 0) {
+		echo "added#" . $row['out_parameter'] . " " . $date;
+	} else {
+		echo "not_added#0";
+	}
+	mysqli_close($con);
+	exit();
+}
+
+if (isset($_POST['get_project'])) {
+	$total = "";
+	mysqli_query($con, "set @project_id_and_name_list=''");
+	mysqli_query($con, "CALL project_management_system_sp_to_fetch_project($_SESSION[user_id],@project_id_and_name_list)");
+	$result = mysqli_query($con, "SELECT @project_id_and_name_list");
+	if (isset($result)) {
+		while ($row = mysqli_fetch_array($result)) {
+			$total .= $row[0];
+		}
+	}
+	echo $total;
+	mysqli_close($con);
+	exit();
+}
+
+if (isset($_POST['edit_the_project'])) {
+	mysqli_query($con, "set @out_parameter = 0");
+	mysqli_query($con, "CALL project_management_system_sp1(0,'','$_POST[project_name]','$_POST[project_description]',$_POST[project_id],0,0,CURRENT_TIMESTAMP,4,@out_parameter)");
+	$rs2 = mysqli_query($con, "SELECT @out_parameter as out_parameter ");
+	$row = mysqli_fetch_assoc($rs2);
+	if ($row['out_parameter'] > 0) {
+		echo $row['out_parameter'];
+	} else {
+		echo "0";
+	}
+	mysqli_close($con);
+	exit();
+}
