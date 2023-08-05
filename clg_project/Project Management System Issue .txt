@@ -1,3 +1,0 @@
-Project Management System Issue : 
-
-not updating count of document or gallery after uploading or deleting uploaded files.

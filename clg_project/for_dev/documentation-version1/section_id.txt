@@ -1,4 +1,0 @@
-1 - do it
-2 - in progress
-3 - verify
-4 - done
