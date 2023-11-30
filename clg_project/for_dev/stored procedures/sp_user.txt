@@ -1,0 +1,75 @@
+delimiter $
+CREATE PROCEDURE `sp_user`(
+        INOUT `p_userid` INT,
+        IN `p_username` VARCHAR(25),
+        IN `p_userrole` INT,
+        IN `p_useremail` VARCHAR(30),
+        IN `p_userpassword` VARCHAR(255),
+        IN `p_userdisabled` INT,
+        IN `p_usercreatedby` INT,
+        IN `p_mode` INT
+)
+BEGIN
+        DECLARE v_previous_related_user VARCHAR(255) DEFAULT "";
+        DECLARE v_user_created_by INT DEFAULT 0;
+        DECLARE v_userid INT DEFAULT 0;
+
+-- mode 1 to create new user
+        IF(p_mode = 1) THEN
+                -- insert the new record of the user
+                INSERT INTO tbl_user (user_name, user_role, user_email_add, user_password, user_created_by) VALUES (p_username, p_userrole, p_useremail, p_userpassword, p_usercreatedby);
+
+		-- setting newly created user id to out parameter
+                SET p_userid = LAST_INSERT_ID();
+
+		-- user is admin
+                if p_userrole = 1 then
+                        UPDATE tbl_user SET related_user = p_userid WHERE user_id = p_userid;
+                END if;
+
+                set @p_privilegeid = 0;
+                call project_management_sp_for_privileges(@p_privilegeid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,p_userid,p_usercreatedby,'',p_userrole);
+
+                if p_usercreatedby != 0 then
+                        fetch_user_id_loop : loop
+                        SET v_user_created_by = (SELECT user_created_by FROM tbl_user WHERE user_id = p_usercreatedby);
+                        if v_user_created_by = 0 then
+                                SET v_userid = p_usercreatedby;
+                                leave fetch_user_id_loop;
+                                else
+                                                SET p_usercreatedby = v_user_created_by;
+                        END if;
+                        END loop fetch_user_id_loop;
+                        SET v_previous_related_user = (SELECT related_user FROM tbl_user WHERE user_id = v_userid);
+                        if v_previous_related_user != "" then
+                                UPDATE tbl_user SET related_user = CONCAT(p_userid, ",", v_previous_related_user) WHERE user_id = v_userid;
+                                ELSE
+                                        UPDATE tbl_user SET related_user = p_userid WHERE user_id = v_userid;
+                        END if;
+                END if;
+        END IF;
+
+-- mode 2 update the record of user
+        IF(p_mode = 2) THEN
+                -- update the record of user
+                UPDATE tbl_user SET user_name = p_username, user_role = p_userrole, user_email_add = p_useremail, user_password = p_userpassword where user_id = p_userid;
+
+                -- update the privilege of user
+                set @p_privilegeid = p_userrole;
+                call project_management_sp_for_privileges(@p_privilegeid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,p_userid,p_usercreatedby,'',8);
+        END IF;
+
+-- mode 3 delete the user
+        IF(p_mode = 3) THEN
+                -- delete the user
+		delete from tbl_privileges where privilege_user_id = p_userid;
+		delete from tbl_user where user_id = p_userid;
+        END IF;
+
+-- mode 4 to disable the user
+	if (p_mode = 4) then
+		-- disable the user to avoid login to system and avoid transaction and discard all privileges
+                UPDATE tbl_user SET user_disabled = p_userdisabled where user_id = p_userid;
+	end if;
+end $
+delimiter ;

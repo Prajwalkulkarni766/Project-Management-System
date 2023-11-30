@@ -1,0 +1,38 @@
+delimiter $
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_fetchproject`(
+        IN `p_user_id` INT,
+        INOUT `p_project_list` VARCHAR(2000)
+)
+BEGIN
+	-- declaring some variable
+	DECLARE v_userid INT DEFAULT 0;
+
+	-- declaring user holding string
+	DECLARE userstring VARCHAR(2000) DEFAULT '';
+
+	-- declaring variable to hold list of the project
+	DECLARE outputString VARCHAR(2000) DEFAULT '';
+
+	-- declaring value of variable i which is used for iterate while loop
+	DECLARE i INT DEFAULT 1;
+
+	-- setting inout parameter's value equal to ''
+	SET p_project_list = '';
+
+	-- getting related users and setting to variable
+	SET userstring =  (SELECT related_user FROM tbl_user WHERE LOCATE(p_user_id, related_user));
+
+	-- using while loop to access the project id, name, description and added date
+	WHILE i <= LENGTH(userstring) - LENGTH(REPLACE(userstring, ',', '')) + 1 DO
+        	SET v_userid = SUBSTRING_INDEX(SUBSTRING_INDEX(userstring, ',', i), ',', -1);
+
+	        SET outputString = (SELECT GROUP_CONCAT(CONCAT(project_id, '#', project_name, '#', project_description, '#', project_added_date) SEPARATOR '*') FROM tbl_project WHERE user_id = v_userid);
+
+        	IF outputString IS NOT NULL THEN
+            		SET p_project_list = CONCAT(outputString, '*', p_project_list);
+        	END IF;
+        	SET i = i + 1;
+    	END WHILE;
+
+end $
+delimiter ;

@@ -1,0 +1,35 @@
+delimiter $
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_document`(
+	INOUT `p_documentid` INT,
+        IN `p_documentoriginalname` VARCHAR(100),
+        IN `p_documentnewname` VARCHAR(100),
+        IN `p_documentpath` VARCHAR(200),
+        IN `p_projectid` INT,
+        IN `p_userid` INT,
+        IN `p_mode` TINYINT
+)
+BEGIN
+
+-- mode 1 to insert the record of document
+        IF(p_mode = 1) THEN
+                -- insert the new record of the document
+                INSERT INTO tbl_document (document_original_name, document_new_name, document_path, project_id, user_id, document_added_date) VALUES (p_documentoriginalname, p_documentnewname, p_documentpath, p_projectid, p_userid, CURRENT_TIMESTAMP());
+
+		-- update the count of document
+                UPDATE tbl_count SET count_document = count_document + 1 WHERE project_id = p_projectid;
+
+		-- setting the inserted record's id to the out parameter
+                SET p_documentid = LAST_INSERT_ID();
+        END IF;
+
+-- mode 2 to delete the document
+        IF(p_mode = 2) THEN
+		-- update the count of document
+                UPDATE tbl_count SET count_document = count_document - 1 WHERE project_id = p_projectid;
+
+                -- delete the record of document
+                DELETE FROM tbl_document WHERE document_id = p_documentid;
+        END IF;
+
+END $
+delimiter ;
