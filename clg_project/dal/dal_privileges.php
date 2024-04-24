@@ -2,16 +2,34 @@
 include 'dal_db.php';
 session_start();
 
+// if (isset($_POST['get_privilege_data'])) {
+//     mysqli_query($con, "set @user = $_SESSION[user_id]");
+//     $result = mysqli_query($con, "CALL sp_user(@user,'',0,'','',0,0,5)");
+//     if (isset($result)) {
+//         $output_in_the_form_of_json = mysqli_fetch_all($result, MYSQLI_ASSOC);
+//         echo json_encode($output_in_the_form_of_json);
+//     } else {
+//         echo json_encode(array('message' => 'record not found', 'status' => false));
+//     }
+// }
+
 if (isset($_POST['get_privilege_data'])) {
     mysqli_query($con, "set @user = $_SESSION[user_id]");
     $result = mysqli_query($con, "CALL sp_user(@user,'',0,'','',0,0,5)");
-    if (isset($result)) {
-        $output_in_the_form_of_json = mysqli_fetch_all($result, MYSQLI_ASSOC);
-        echo json_encode($output_in_the_form_of_json);
+    if ($result === false) {
+        $error_message = mysqli_error($con);
+        echo json_encode(array('message' => 'Query failed: ' . $error_message, 'status' => false));
     } else {
-        echo json_encode(array('message' => 'record not found', 'status' => false));
+        $output_in_the_form_of_json = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        if ($output_in_the_form_of_json !== null) {
+            echo json_encode($output_in_the_form_of_json);
+        } else {
+            // echo json_encode(array('message' => 'No records found', 'status' => false));
+            echo "abc";
+        }
     }
 }
+
 
 if (isset($_POST['save_changed_privilege'])) {
     mysqli_query($con, "set @p_privilegeid=0");

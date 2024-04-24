@@ -1,6 +1,6 @@
 // this function check device means device is mobile or pad or desktop or laptop and make tr according to it
 function check_device_make_tr(data) {
-    // debugger;
+    debugger;
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         // table for mobile and tablet
         let table_str = '<table role="table">';
@@ -121,7 +121,7 @@ function check_device_make_tr(data) {
 
 // this function used to get privilege data from backend
 function get_privilege_data() {
-    // debugger;
+    debugger;
     $.ajax({
         type: "post",
         url: "dal/dal_privileges.php",
@@ -129,7 +129,13 @@ function get_privilege_data() {
             get_privilege_data: "get_privilege_data",
         },
         success: function (response) {
-            // debugger;
+            debugger;
+            if(response.includes("Fatal error")){
+                document.getElementById("new-alert-msg").innerHTML =
+                    "Data not found";
+                document.getElementById("new-alert").style.display = "block";
+                return;
+            }
             parsed_response = JSON.parse(response);
             if (!parsed_response.message) {
                 document.getElementById("privilege_tbl_holding_div").innerHTML = " ";
@@ -146,7 +152,7 @@ function get_privilege_data() {
 
 // function to save after edit
 function save_changed_privilege_record(id) {
-    // debugger;
+    debugger;
     let privilege_for_view_dashboard = document.getElementById("privilege_for_view_dashboard" + id).checked;
     privilege_for_view_dashboard == true ? privilege_for_view_dashboard = 1 : privilege_for_view_dashboard = 0;
     let privilege_for_move_dashboard_content = document.getElementById("privilege_for_move_dashboard_content" + id).checked;
@@ -194,7 +200,7 @@ function save_changed_privilege_record(id) {
             privilege_for_delete_uploaded_documents: privilege_for_delete_uploaded_documents,
         },
         success: function (response) {
-            // debugger;
+            debugger;
             if (response > 0) {
                 document.getElementById("new-alert-msg").innerHTML =
                     "Changes Saved";

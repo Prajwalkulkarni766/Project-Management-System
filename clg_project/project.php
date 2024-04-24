@@ -7,7 +7,7 @@
 	?>
 </head>
 
-<body>
+<body onload="get_project()">
 	<?php
 	include 'dal/dal_db.php';
 	include 'menu.php';
