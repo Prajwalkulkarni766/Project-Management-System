@@ -3,15 +3,22 @@ include 'dal_db.php';
 session_start();
 
 if (isset($_POST['get_users'])) {
-    // mysqli_query($con, "set @user_id=$_SESSION[user_id]");
-    // $result = mysqli_query($con, "CALL sp_user(@user_id,'',0,'','',0,'',5)");
-    // if (isset($result)) {
-    //     $output_in_the_form_of_json = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    //     echo json_encode($output_in_the_form_of_json);
-    // } else {
-    //     echo "Not found";
-    // }
-    echo "CALL sp_user($_SESSION[user_id],'',0,'','',0,'',5)";
+    $relatedUsers = mysqli_query($con, "SELECT related_user FROM tbl_user WHERE user_id = $_SESSION[user_id]");
+    $row = mysqli_fetch_assoc($relatedUsers);
+    $array = explode(",", $row['related_user']);
+    $output_in_the_form_of_json = array();
+    foreach ($array as $key => $value) {
+        if ($value == $_SESSION["user_id"]) {
+            continue;
+        }
+        $userData = mysqli_query($con, "SELECT * FROM tbl_user WHERE user_id = $value");
+        if ($userData) {
+            while ($row = mysqli_fetch_assoc($userData)) {
+                $output_in_the_form_of_json[] = $row;
+            }
+        }
+    }
+    echo json_encode($output_in_the_form_of_json);
     mysqli_close($con);
     exit();
 }

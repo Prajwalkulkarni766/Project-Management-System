@@ -226,9 +226,7 @@ function get_users() {
             1,
             parsed_response[index_of_response]["user_id"],
             parsed_response[index_of_response]["user_name"],
-            parsed_response[index_of_response]["user_contact_no"],
             parsed_response[index_of_response]["user_email_add"],
-            parsed_response[index_of_response]["user_gender"],
             parsed_response[index_of_response]["user_role"],
             parsed_response[index_of_response]["user_password"],
             parsed_response[index_of_response]["user_disabled"]
@@ -236,6 +234,7 @@ function get_users() {
           document.getElementById("existing_created_user").innerHTML += profile;
           index_of_response++;
         }
+        document.getElementById("loading_gif").style.display = "none";
       }
     },
   });

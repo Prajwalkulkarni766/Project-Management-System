@@ -2,32 +2,30 @@
 include 'dal_db.php';
 session_start();
 
-// if (isset($_POST['get_privilege_data'])) {
-//     mysqli_query($con, "set @user = $_SESSION[user_id]");
-//     $result = mysqli_query($con, "CALL sp_user(@user,'',0,'','',0,0,5)");
-//     if (isset($result)) {
-//         $output_in_the_form_of_json = mysqli_fetch_all($result, MYSQLI_ASSOC);
-//         echo json_encode($output_in_the_form_of_json);
-//     } else {
-//         echo json_encode(array('message' => 'record not found', 'status' => false));
-//     }
-// }
-
 if (isset($_POST['get_privilege_data'])) {
-    mysqli_query($con, "set @user = $_SESSION[user_id]");
-    $result = mysqli_query($con, "CALL sp_user(@user,'',0,'','',0,0,5)");
-    if ($result === false) {
-        $error_message = mysqli_error($con);
-        echo json_encode(array('message' => 'Query failed: ' . $error_message, 'status' => false));
-    } else {
-        $output_in_the_form_of_json = mysqli_fetch_all($result, MYSQLI_ASSOC);
-        if ($output_in_the_form_of_json !== null) {
-            echo json_encode($output_in_the_form_of_json);
-        } else {
-            // echo json_encode(array('message' => 'No records found', 'status' => false));
-            echo "abc";
+    $relatedUsers = mysqli_query($con, "SELECT related_user FROM tbl_user WHERE user_id = $_SESSION[user_id]");
+    $row = mysqli_fetch_assoc($relatedUsers);
+    $array = explode(",", $row['related_user']);
+    $output_in_the_form_of_json = array();
+    foreach ($array as $key => $value) {
+        if ($value == $_SESSION["user_id"]) {
+            continue;
+        }
+        $userData = mysqli_query($con, "SELECT * FROM tbl_privileges WHERE privilege_user_id = $value");
+        $userNameResult = mysqli_query($con, "SELECT user_name FROM tbl_user WHERE user_id = $value");
+        if ($userData && $userNameResult) {
+            $userNameRow = mysqli_fetch_assoc($userNameResult);
+            $userName = $userNameRow['user_name']; // Fetch the user name
+            while ($row = mysqli_fetch_assoc($userData)) {
+                $row['user_id'] = $value;
+                $row['user_name'] = $userName;
+                $output_in_the_form_of_json[] = $row;
+            }
         }
     }
+    echo json_encode($output_in_the_form_of_json);
+    mysqli_close($con);
+    exit();
 }
 
 
